@@ -11,16 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const apiUrl = process.env.API_URL;
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.__API__=${JSON.stringify(apiUrl)};`,
-          }}
-        />
-      </head>
       <body>{children}</body>
     </html>
   );
