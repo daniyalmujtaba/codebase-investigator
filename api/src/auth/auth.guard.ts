@@ -27,6 +27,7 @@ export class AuthGuard implements CanActivate {
 
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest<Request>();
+    if (req.method === "OPTIONS") return true; // CORS preflight
     if (PUBLIC_PATH_PREFIXES.some((p) => req.path === p || req.path.startsWith(p))) return true;
     if (!this.enabled) return true;
 
