@@ -1,9 +1,8 @@
 import type { SseEvent } from "@ci/shared";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 async function authHeaders(): Promise<Record<string, string>> {
-  // Browser path: hit the local /api/me endpoint to get a signed payload.
   const r = await fetch("/api/me", { credentials: "include" });
   if (!r.ok) return {};
   const { email, ts, token } = await r.json();
