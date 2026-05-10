@@ -16,6 +16,27 @@ export class OpenAIProvider implements LlmProvider {
     this.client = new OpenAI({ apiKey: opts.apiKey, baseURL: opts.baseURL });
   }
 
+  private async callWithRetry<T>(fn: () => Promise<T>, maxAttempts = 4): Promise<T> {
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await fn();
+      } catch (e: unknown) {
+        lastErr = e;
+        const status = (e as { status?: number })?.status;
+        const retriable = status === 429 || (status !== undefined && status >= 500 && status < 600);
+        if (!retriable || attempt === maxAttempts) throw e;
+        const retryAfterHeader = (e as { headers?: Record<string, string> })?.headers?.["retry-after"];
+        const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : 0;
+        const backoffMs = Math.min(1000 * 2 ** (attempt - 1), 8000) + Math.random() * 500;
+        const waitMs = Math.max(retryAfterMs, backoffMs);
+        this.log.warn(`[${this.providerId}] ${status} — retry ${attempt}/${maxAttempts - 1} in ${Math.round(waitMs)}ms`);
+        await new Promise((r) => setTimeout(r, waitMs));
+      }
+    }
+    throw lastErr;
+  }
+
   async call(model: string, req: LlmCallRequest): Promise<LlmCallResponse> {
     const messages = req.messages.map((m) => {
       if (m.role === "tool") {
@@ -60,7 +81,7 @@ export class OpenAIProvider implements LlmProvider {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const res = await (this.client.chat.completions as any).create(body);
+    const res: any = await this.callWithRetry(() => (this.client.chat.completions as any).create(body));
     const choice = res.choices?.[0];
     const msg = choice?.message ?? {};
     const toolCalls =
