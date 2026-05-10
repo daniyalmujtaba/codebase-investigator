@@ -1,0 +1,123 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model Repo {
+  id            String        @id @default(cuid())
+  url           String        @unique
+  owner         String
+  name          String
+  ref           String
+  cachePath     String
+  skeleton      String?       // markdown directory tree + per-file 1-line summaries
+  skeletonAt    DateTime?
+  clonedAt      DateTime      @default(now())
+  sessions      Session[]
+  fileSummaries FileSummary[]
+}
+
+model FileSummary {
+  id        String                       @id @default(cuid())
+  repo      Repo                         @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  repoId    String
+  path      String
+  summary   String
+  embedding Unsupported("vector(768)")?
+  createdAt DateTime                     @default(now())
+
+  @@unique([repoId, path])
+  @@index([repoId])
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model InvestigationCache {
+  id         String   @id @default(cuid())
+  sessionId  String
+  toolName   String
+  argsHash   String
+  result     Json
+  createdAt  DateTime @default(now())
+
+  @@unique([sessionId, toolName, argsHash])
+  @@index([sessionId])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  repo      Repo      @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  repoId    String
+  title     String?
+  createdAt DateTime  @default(now())
+  messages  Message[]
+  claims    Claim[]
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId   String
+  turn        Int
+  role        String    // "user" | "assistant"
+  content     String    // markdown for assistant; raw text for user
+  rawAnswer   Json?     // full AgentAnswer for assistant turns
+  audit       Audit?
+  claims      Claim[]
+  createdAt   DateTime  @default(now())
+
+  @@index([sessionId, turn])
+}
+
+model Claim {
+  id         String     @id @default(cuid())
+  session    Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId  String
+  message    Message    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId  String
+  turn       Int
+  text       String
+  citations  Json       // Citation[]
+  createdAt  DateTime   @default(now())
+
+  @@index([sessionId, turn])
+}
+
+model Audit {
+  id           String   @id @default(cuid())
+  message      Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId    String   @unique
+  verifier     Json     // VerifierReport
+  auditor      Json     // AuditorVerdict
+  auditorModel String
+  promptTokens Int?
+  outputTokens Int?
+  costUsd      Float?
+  createdAt    DateTime @default(now())
+}
+
+model LlmCall {
+  id            String   @id @default(cuid())
+  sessionId     String?
+  messageId     String?
+  role          String   // "agent" | "auditor"
+  provider      String
+  model         String
+  promptTokens  Int
+  outputTokens  Int
+  latencyMs     Int
+  costUsd       Float?
+  createdAt     DateTime @default(now())
+
+  @@index([sessionId])
+}

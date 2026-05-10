@@ -1,0 +1,59 @@
+services:
+  - type: web
+    name: ci-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: API_PORT
+        value: 4000
+      - key: WEB_ORIGIN
+        sync: false           # set to your Render web URL
+      - key: DATABASE_URL
+        sync: false           # Neon connection string
+      - key: REPO_CACHE_DIR
+        value: /tmp/repos
+      - key: AGENT_MODEL
+        value: gemini:gemini-2.0-flash
+      - key: AUDITOR_MODEL
+        value: groq:llama-3.3-70b-versatile
+      - key: EMBEDDING_MODEL
+        value: gemini:text-embedding-004
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: AUTH_SHARED_SECRET
+        generateValue: true
+      - key: ALLOWED_EMAILS
+        sync: false           # comma-separated
+
+  - type: web
+    name: ci-web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./web/Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        sync: false           # set to https://ci-api.onrender.com (or whatever Render gives)
+      - key: NEXTAUTH_URL
+        sync: false           # public URL of the web service
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: AUTH_SHARED_SECRET
+        sync: false           # must match ci-api
+      - key: ALLOWED_EMAILS
+        sync: false           # must match ci-api

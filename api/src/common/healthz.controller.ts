@@ -1,0 +1,9 @@
+import { Controller, Get } from "@nestjs/common";
+
+@Controller()
+export class HealthzController {
+  @Get("healthz")
+  health() {
+    return { ok: true, ts: new Date().toISOString() };
+  }
+}
