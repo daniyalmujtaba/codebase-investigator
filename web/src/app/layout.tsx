@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const apiUrl = process.env.API_URL ?? "http://localhost:4000";
+  const apiUrl = process.env.API_URL;
   return (
     <html lang="en" className={`${inter.variable} ${mono.variable}`}>
       <head>

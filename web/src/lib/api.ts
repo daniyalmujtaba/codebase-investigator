@@ -6,7 +6,7 @@ declare global {
 
 function getApi(): string {
   if (typeof window !== "undefined" && window.__API__) return window.__API__;
-  return process.env.API_URL ?? "http://localhost:4000";
+  return process.env.API_URL!;
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
