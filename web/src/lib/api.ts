@@ -1,6 +1,13 @@
 import type { SseEvent } from "@ci/shared";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
+declare global {
+  interface Window { __API__?: string; }
+}
+
+function getApi(): string {
+  if (typeof window !== "undefined" && window.__API__) return window.__API__;
+  return process.env.API_URL ?? "http://localhost:4000";
+}
 
 async function authHeaders(): Promise<Record<string, string>> {
   const r = await fetch("/api/me", { credentials: "include" });
@@ -11,7 +18,7 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 
 export async function createSession(repoUrl: string, title?: string) {
-  const r = await fetch(`${API}/sessions`, {
+  const r = await fetch(`${getApi()}/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify({ repoUrl, title }),
@@ -21,7 +28,7 @@ export async function createSession(repoUrl: string, title?: string) {
 }
 
 export async function getSession(id: string) {
-  const r = await fetch(`${API}/sessions/${id}`, { headers: await authHeaders() });
+  const r = await fetch(`${getApi()}/sessions/${id}`, { headers: await authHeaders() });
   if (!r.ok) throw new Error(`getSession failed: ${r.status}`);
   return r.json();
 }
@@ -32,7 +39,7 @@ export async function streamChat(
   onEvent: (e: SseEvent) => void,
   signal?: AbortSignal,
 ) {
-  const r = await fetch(`${API}/chat/stream`, {
+  const r = await fetch(`${getApi()}/chat/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify({ sessionId, message }),
