@@ -7,6 +7,7 @@ const allowed = (process.env.ALLOWED_EMAILS ?? "")
   .filter(Boolean);
 
 const nextAuth = NextAuth({
+  trustHost: true,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
