@@ -28,12 +28,16 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: OPENAI_COMPAT_API_KEY
+        sync: false
+      - key: OPENAI_COMPAT_BASE_URL
+        sync: false
       - key: ADMIN_TOKEN
         generateValue: true
       - key: AUTH_SHARED_SECRET
-        generateValue: true
+        sync: false           # must match ci-web (paste same 64-hex value into both)
       - key: ALLOWED_EMAILS
-        sync: false           # comma-separated
+        sync: false           # comma-separated, must match ci-web
 
   - type: web
     name: ci-web

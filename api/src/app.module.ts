@@ -15,7 +15,7 @@ import { AuthModule } from "./auth/auth.module";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: ["../.env", ".env"] }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: [".env"] }),
     ThrottlerModule.forRoot([
       { name: "global", ttl: 60_000, limit: 60 },
       { name: "chat",   ttl: 60_000, limit: 10 },
